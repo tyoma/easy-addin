@@ -20,6 +20,78 @@
 
 #pragma once
 
+#include <atlbase.h>
+#include <atlcom.h>
+#include <memory>
+
+#pragma warning(disable: 4278)
+#pragma warning(disable: 4146)
+	#import <MSADDNDR.DLL> no_implementation rename_namespace("msaddin")
+#pragma warning(default: 4146)
+#pragma warning(default: 4278)
+
 namespace ea
 {
+	template <class AddinAppClass, const CLSID *ClassID, int RegistryResourceID>
+	class ATL_NO_VTABLE addin
+		: public CComObjectRootEx<CComSingleThreadModel>,
+			public CComCoClass<addin<AddinAppClass, ClassID, RegistryResourceID>, ClassID>,
+			public IDispatchImpl<msaddin::IDTExtensibility2, &__uuidof(msaddin::IDTExtensibility2), &__uuidof(msaddin::__AddInDesignerObjects), 1, 0>
+	{
+		std::auto_ptr<AddinAppClass> _application;
+
+		// IDTExtensibility2 methods
+		STDMETHODIMP raw_OnConnection(IDispatch *host, msaddin::ext_ConnectMode connectMode, IDispatch *instance, SAFEARRAY **custom);
+		STDMETHODIMP raw_OnDisconnection(msaddin::ext_DisconnectMode removeMode, SAFEARRAY **custom);
+		STDMETHODIMP raw_OnAddInsUpdate(SAFEARRAY **custom);
+		STDMETHODIMP raw_OnStartupComplete(SAFEARRAY **custom);
+		STDMETHODIMP raw_OnBeginShutdown(SAFEARRAY **custom);
+
+	public:
+		DECLARE_REGISTRY_RESOURCEID(RegistryResourceID)
+		DECLARE_NOT_AGGREGATABLE(addin)
+
+		BEGIN_COM_MAP(addin)
+			COM_INTERFACE_ENTRY2(IDispatch, msaddin::IDTExtensibility2)
+			COM_INTERFACE_ENTRY(msaddin::IDTExtensibility2)
+		END_COM_MAP()
+	};
+
+
+	template <class AddinAppClass, const CLSID *ClassID, int RegistryResourceID>
+	STDMETHODIMP addin<AddinAppClass, ClassID, RegistryResourceID>::raw_OnConnection(IDispatch *host, msaddin::ext_ConnectMode connectMode, IDispatch *instance, SAFEARRAY **custom)
+	try
+	{
+		_application.reset(new AddinAppClass);
+		return S_OK;
+	}
+	catch (...)
+	{
+		return E_FAIL;
+	}
+
+	template <class AddinAppClass, const CLSID *ClassID, int RegistryResourceID>
+	STDMETHODIMP addin<AddinAppClass, ClassID, RegistryResourceID>::raw_OnDisconnection(msaddin::ext_DisconnectMode /*removeMode*/, SAFEARRAY ** /*custom*/)
+	{
+		_application.reset();
+		return S_OK;
+	}
+
+	template <class AddinAppClass, const CLSID *ClassID, int RegistryResourceID>
+	STDMETHODIMP addin<AddinAppClass, ClassID, RegistryResourceID>::raw_OnAddInsUpdate(SAFEARRAY ** /*custom*/)
+	{
+		return E_NOTIMPL;
+	}
+
+	template <class AddinAppClass, const CLSID *ClassID, int RegistryResourceID>
+	STDMETHODIMP addin<AddinAppClass, ClassID, RegistryResourceID>::raw_OnStartupComplete(SAFEARRAY ** /*custom*/)
+	{
+		return E_NOTIMPL;
+	}
+
+	template <class AddinAppClass, const CLSID *ClassID, int RegistryResourceID>
+	STDMETHODIMP addin<AddinAppClass, ClassID, RegistryResourceID>::raw_OnBeginShutdown(SAFEARRAY ** /*custom*/)
+	{
+		return E_NOTIMPL;
+	}
 }
