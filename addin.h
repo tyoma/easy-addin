@@ -32,13 +32,13 @@
 
 namespace ea
 {
-	template <class AddinAppClass, const CLSID *ClassID, int RegistryResourceID>
+	template <class AppT, const CLSID *ClassID, int RegResID>
 	class ATL_NO_VTABLE addin
 		: public CComObjectRootEx<CComSingleThreadModel>,
-			public CComCoClass<addin<AddinAppClass, ClassID, RegistryResourceID>, ClassID>,
+			public CComCoClass<addin<AppT, ClassID, RegResID>, ClassID>,
 			public IDispatchImpl<msaddin::IDTExtensibility2, &__uuidof(msaddin::IDTExtensibility2), &__uuidof(msaddin::__AddInDesignerObjects), 1, 0>
 	{
-		std::auto_ptr<AddinAppClass> _application;
+		std::auto_ptr<AppT> _application;
 
 		// IDTExtensibility2 methods
 		STDMETHODIMP raw_OnConnection(IDispatch *host, msaddin::ext_ConnectMode connectMode, IDispatch *instance, SAFEARRAY **custom);
@@ -48,7 +48,7 @@ namespace ea
 		STDMETHODIMP raw_OnBeginShutdown(SAFEARRAY **custom);
 
 	public:
-		DECLARE_REGISTRY_RESOURCEID(RegistryResourceID)
+		DECLARE_REGISTRY_RESOURCEID(RegResID)
 		DECLARE_NOT_AGGREGATABLE(addin)
 
 		BEGIN_COM_MAP(addin)
@@ -58,11 +58,11 @@ namespace ea
 	};
 
 
-	template <class AddinAppClass, const CLSID *ClassID, int RegistryResourceID>
-	STDMETHODIMP addin<AddinAppClass, ClassID, RegistryResourceID>::raw_OnConnection(IDispatch *host, msaddin::ext_ConnectMode connectMode, IDispatch *instance, SAFEARRAY **custom)
+	template <class AppT, const CLSID *ClassID, int RegResID>
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_OnConnection(IDispatch *host, msaddin::ext_ConnectMode connectMode, IDispatch *instance, SAFEARRAY **custom)
 	try
 	{
-		_application.reset(new AddinAppClass);
+		_application.reset(new AppT);
 		return S_OK;
 	}
 	catch (...)
@@ -70,27 +70,27 @@ namespace ea
 		return E_FAIL;
 	}
 
-	template <class AddinAppClass, const CLSID *ClassID, int RegistryResourceID>
-	STDMETHODIMP addin<AddinAppClass, ClassID, RegistryResourceID>::raw_OnDisconnection(msaddin::ext_DisconnectMode /*removeMode*/, SAFEARRAY ** /*custom*/)
+	template <class AppT, const CLSID *ClassID, int RegResID>
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_OnDisconnection(msaddin::ext_DisconnectMode /*removeMode*/, SAFEARRAY ** /*custom*/)
 	{
 		_application.reset();
 		return S_OK;
 	}
 
-	template <class AddinAppClass, const CLSID *ClassID, int RegistryResourceID>
-	STDMETHODIMP addin<AddinAppClass, ClassID, RegistryResourceID>::raw_OnAddInsUpdate(SAFEARRAY ** /*custom*/)
+	template <class AppT, const CLSID *ClassID, int RegResID>
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_OnAddInsUpdate(SAFEARRAY ** /*custom*/)
 	{
 		return E_NOTIMPL;
 	}
 
-	template <class AddinAppClass, const CLSID *ClassID, int RegistryResourceID>
-	STDMETHODIMP addin<AddinAppClass, ClassID, RegistryResourceID>::raw_OnStartupComplete(SAFEARRAY ** /*custom*/)
+	template <class AppT, const CLSID *ClassID, int RegResID>
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_OnStartupComplete(SAFEARRAY ** /*custom*/)
 	{
 		return E_NOTIMPL;
 	}
 
-	template <class AddinAppClass, const CLSID *ClassID, int RegistryResourceID>
-	STDMETHODIMP addin<AddinAppClass, ClassID, RegistryResourceID>::raw_OnBeginShutdown(SAFEARRAY ** /*custom*/)
+	template <class AppT, const CLSID *ClassID, int RegResID>
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_OnBeginShutdown(SAFEARRAY ** /*custom*/)
 	{
 		return E_NOTIMPL;
 	}
