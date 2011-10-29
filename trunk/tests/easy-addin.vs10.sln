@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "easy-addin.tests", "easy-addin.tests.vcxproj", "{35B1FE48-A741-BC03-5393-A908CBE94DE8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "easy-addin.tests", "easy-addin.tests.vcxproj", "{549BC5EC-9E8F-4EEC-A1B0-739EA8D9C74A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,10 +9,10 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{35B1FE48-A741-BC03-5393-A908CBE94DE8}.Debug|Win32.ActiveCfg = Debug|Win32
-		{35B1FE48-A741-BC03-5393-A908CBE94DE8}.Debug|Win32.Build.0 = Debug|Win32
-		{35B1FE48-A741-BC03-5393-A908CBE94DE8}.Release|Win32.ActiveCfg = Release|Win32
-		{35B1FE48-A741-BC03-5393-A908CBE94DE8}.Release|Win32.Build.0 = Release|Win32
+		{549BC5EC-9E8F-4EEC-A1B0-739EA8D9C74A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{549BC5EC-9E8F-4EEC-A1B0-739EA8D9C74A}.Debug|Win32.Build.0 = Debug|Win32
+		{549BC5EC-9E8F-4EEC-A1B0-739EA8D9C74A}.Release|Win32.ActiveCfg = Release|Win32
+		{549BC5EC-9E8F-4EEC-A1B0-739EA8D9C74A}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
