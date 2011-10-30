@@ -26,7 +26,7 @@
 
 #pragma warning(disable: 4278)
 #pragma warning(disable: 4146)
-	#import <MSADDNDR.DLL> no_implementation rename_namespace("msaddin")
+	#import <MSADDNDR.DLL> raw_interfaces_only rename_namespace("msaddin")
 #pragma warning(default: 4146)
 #pragma warning(default: 4278)
 
@@ -41,11 +41,11 @@ namespace ea
 		std::auto_ptr<AppT> _application;
 
 		// IDTExtensibility2 methods
-		STDMETHODIMP raw_OnConnection(IDispatch *host, msaddin::ext_ConnectMode connectMode, IDispatch *instance, SAFEARRAY **custom);
-		STDMETHODIMP raw_OnDisconnection(msaddin::ext_DisconnectMode removeMode, SAFEARRAY **custom);
-		STDMETHODIMP raw_OnAddInsUpdate(SAFEARRAY **custom);
-		STDMETHODIMP raw_OnStartupComplete(SAFEARRAY **custom);
-		STDMETHODIMP raw_OnBeginShutdown(SAFEARRAY **custom);
+		STDMETHODIMP OnConnection(IDispatch *host, msaddin::ext_ConnectMode connectMode, IDispatch *instance, SAFEARRAY **custom);
+		STDMETHODIMP OnDisconnection(msaddin::ext_DisconnectMode removeMode, SAFEARRAY **custom);
+		STDMETHODIMP OnAddInsUpdate(SAFEARRAY **custom);
+		STDMETHODIMP OnStartupComplete(SAFEARRAY **custom);
+		STDMETHODIMP OnBeginShutdown(SAFEARRAY **custom);
 
 	public:
 		DECLARE_REGISTRY_RESOURCEID(RegResID)
@@ -59,7 +59,7 @@ namespace ea
 
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
-	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_OnConnection(IDispatch *host, msaddin::ext_ConnectMode connectMode, IDispatch *instance, SAFEARRAY **custom)
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::OnConnection(IDispatch *host, msaddin::ext_ConnectMode connectMode, IDispatch *instance, SAFEARRAY **custom)
 	try
 	{
 		_application.reset(new AppT);
@@ -71,26 +71,26 @@ namespace ea
 	}
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
-	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_OnDisconnection(msaddin::ext_DisconnectMode /*removeMode*/, SAFEARRAY ** /*custom*/)
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::OnDisconnection(msaddin::ext_DisconnectMode /*removeMode*/, SAFEARRAY ** /*custom*/)
 	{
 		_application.reset();
 		return S_OK;
 	}
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
-	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_OnAddInsUpdate(SAFEARRAY ** /*custom*/)
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::OnAddInsUpdate(SAFEARRAY ** /*custom*/)
 	{
 		return E_NOTIMPL;
 	}
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
-	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_OnStartupComplete(SAFEARRAY ** /*custom*/)
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::OnStartupComplete(SAFEARRAY ** /*custom*/)
 	{
 		return E_NOTIMPL;
 	}
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
-	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_OnBeginShutdown(SAFEARRAY ** /*custom*/)
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::OnBeginShutdown(SAFEARRAY ** /*custom*/)
 	{
 		return E_NOTIMPL;
 	}
