@@ -23,10 +23,12 @@
 #include <atlbase.h>
 #include <atlcom.h>
 #include <memory>
+#include <string>
 
 #pragma warning(disable: 4278)
 #pragma warning(disable: 4146)
 	#import <MSADDNDR.DLL> raw_interfaces_only rename_namespace("msaddin")
+	#import <dte80a.olb> rename_namespace("msaddin")
 #pragma warning(default: 4146)
 #pragma warning(default: 4278)
 
@@ -57,12 +59,24 @@ namespace ea
 		END_COM_MAP()
 	};
 
+	struct command
+	{
+		virtual ~command() {	}
+		
+		virtual std::wstring id() const = 0;
+		virtual std::wstring caption() const = 0;
+		virtual std::wstring description() const = 0;
+		virtual void update_ui(msaddin::CommandPtr cmd, IDispatchPtr command_bars) const = 0;
+		virtual bool query_status(msaddin::_DTEPtr dte, bool &enabled, std::wstring *caption, std::wstring *description) const = 0;
+		virtual void execute(msaddin::_DTEPtr dte, VARIANT *input, VARIANT *output) const = 0;
+	};
+
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
 	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::OnConnection(IDispatch *host, msaddin::ext_ConnectMode connectMode, IDispatch *instance, SAFEARRAY **custom)
 	try
 	{
-		_application.reset(new AppT);
+		_application.reset(new AppT(IDispatchPtr(host, true)));
 		return S_OK;
 	}
 	catch (...)

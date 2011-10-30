@@ -1,5 +1,7 @@
 #include <easy-addin/addin.h>
 
+#include "DTEMocks.h"
+
 #include <atlbase.h>
 #include <atlcom.h>
 
@@ -16,7 +18,7 @@ namespace ea
 		{
 			struct __declspec(uuid("8B9A13D1-1FCC-4DA6-BCC9-5882204833DC")) addin1_novscmdt
 			{
-				addin1_novscmdt()
+				addin1_novscmdt(msaddin::_DTEPtr dte)
 				{	++instance_count;	}
 
 				~addin1_novscmdt()
@@ -27,7 +29,7 @@ namespace ea
 
 			struct __declspec(uuid("B1F62666-3E61-4E61-A946-0E18D9D46C03")) addin2_novscmdt
 			{
-				addin2_novscmdt()
+				addin2_novscmdt(msaddin::_DTEPtr dte)
 				{	++instance_count;	}
 
 				~addin2_novscmdt()
@@ -38,16 +40,29 @@ namespace ea
 
 			struct __declspec(uuid("C5B0AE02-698E-4B11-AF14-462520BDA453")) addin_throwing_novscmdt
 			{
-				addin_throwing_novscmdt()
+				addin_throwing_novscmdt(msaddin::_DTEPtr dte)
 				{	throw 0;	}
+			};
+
+			struct __declspec(uuid("26BCC010-DC3A-4973-9C78-9F2EA102A2A8")) addin_with_param_storing
+			{
+				addin_with_param_storing(msaddin::_DTEPtr dte)
+				{	this->dte = dte;	}
+
+				~addin_with_param_storing()
+				{	dte = 0;	}
+
+				static msaddin::_DTEPtr dte;
 			};
 
 			int addin1_novscmdt::instance_count = 0;
 			int addin2_novscmdt::instance_count = 0;
+			msaddin::_DTEPtr addin_with_param_storing::dte;
 
 			typedef addin<addin1_novscmdt, &__uuidof(addin1_novscmdt), 123> Addin1Impl;
 			typedef addin<addin2_novscmdt, &__uuidof(addin2_novscmdt), 234> Addin2Impl;
 			typedef addin<addin_throwing_novscmdt, &__uuidof(addin_throwing_novscmdt), 234> AddinThrowingImpl;
+			typedef addin<addin_with_param_storing, &__uuidof(addin_with_param_storing), 234> AddinParamStoringImpl;
 		}
 
 		[TestClass]
@@ -217,6 +232,56 @@ namespace ea
 
 				// ACT / ASSERT
 				Assert::IsTrue(S_OK == a->OnDisconnection(msaddin::ext_dm_HostShutdown, 0));
+			}
+
+
+			[TestMethod]
+			void DTEIsPassedToAppCtor()
+			{
+				// INIT
+				CComPtr<msaddin::IDTExtensibility2> a;
+				msaddin::_DTEPtr dte1(new DTEMock), dte2(new DTEMock);
+
+				AddinParamStoringImpl::CreateInstance(&a);
+
+				// ACT
+				a->OnConnection(dte1, msaddin::ext_cm_AfterStartup, 0, 0);
+
+				// ASSERT
+				Assert::IsTrue(dte1 == addin_with_param_storing::dte);
+
+				// INIT
+				a->OnDisconnection(msaddin::ext_dm_UserClosed, 0);
+
+				// ACT
+				a->OnConnection(dte2, msaddin::ext_cm_AfterStartup, 0, 0);
+
+				// ASSERT
+				Assert::IsTrue(dte2 == addin_with_param_storing::dte);
+			}
+
+
+			[TestMethod]
+			void DTEIsReleasedIfNotNecessary()
+			{
+				// INIT
+				bool released = false;
+				CComPtr<msaddin::IDTExtensibility2> a;
+				msaddin::_DTEPtr dte(new DTEMock(released));
+
+				Addin1Impl::CreateInstance(&a);
+
+				// ACT
+				a->OnConnection(dte, msaddin::ext_cm_AfterStartup, 0, 0);
+
+				// ASSERT
+				Assert::IsFalse(released);
+
+				// ACT
+				dte = 0;
+
+				// ASSERT
+				Assert::IsTrue(released);
 			}
 		};
 	}

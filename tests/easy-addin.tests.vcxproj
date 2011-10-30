@@ -45,7 +45,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./../..;"$(VSInstallDir)..\Common Files\Designer"</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./../..;$(VSInstallDir)..\Common Files\Designer;$(VSInstallDir)..\Common Files\Microsoft Shared\MSEnv</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
@@ -65,7 +65,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./../..;"$(VSInstallDir)..\Common Files\Designer"</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./../..;$(VSInstallDir)..\Common Files\Designer;$(VSInstallDir)..\Common Files\Microsoft Shared\MSEnv</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
@@ -96,8 +96,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\addin.h" />
+    <ClInclude Include="DTEMocks.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DTEMocks.cpp" />
     <ClCompile Include="EasyAddinTests.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -8,8 +8,10 @@
     <ClInclude Include="..\addin.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DTEMocks.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EasyAddinTests.cpp" />
+    <ClCompile Include="DTEMocks.cpp" />
   </ItemGroup>
 </Project>

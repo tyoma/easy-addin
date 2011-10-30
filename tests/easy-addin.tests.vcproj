@@ -43,7 +43,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="./../..;&quot;$(VSInstallDir)..\Common Files\Designer&quot;"
+				AdditionalIncludeDirectories="./../..;$(VSInstallDir)..\Common Files\Designer;$(VSInstallDir)..\Common Files\Microsoft Shared\MSEnv"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="0"
@@ -115,7 +115,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="./../..;&quot;$(VSInstallDir)..\Common Files\Designer&quot;"
+				AdditionalIncludeDirectories="./../..;$(VSInstallDir)..\Common Files\Designer;$(VSInstallDir)..\Common Files\Microsoft Shared\MSEnv"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				RuntimeLibrary="2"
 				WarningLevel="4"
@@ -178,6 +178,14 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\DTEMocks.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\DTEMocks.h"
+			>
+		</File>
 		<File
 			RelativePath=".\EasyAddinTests.cpp"
 			>
