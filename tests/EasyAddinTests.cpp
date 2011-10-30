@@ -98,7 +98,7 @@ namespace ea
 				
 				// ACT
 				Addin1Impl::CreateInstance(&a1);
-				HRESULT hr1 = a1->raw_OnConnection(0, msaddin::ext_cm_AfterStartup, 0, 0);
+				HRESULT hr1 = a1->OnConnection(0, msaddin::ext_cm_AfterStartup, 0, 0);
 				
 				// ASSERT
 				Assert::IsTrue(1 == addin1_novscmdt::instance_count);
@@ -108,8 +108,8 @@ namespace ea
 				// ACT
 				Addin2Impl::CreateInstance(&a2);
 				Addin2Impl::CreateInstance(&a3);
-				HRESULT hr2 = a2->raw_OnConnection(0, msaddin::ext_cm_Startup, 0, 0);
-				HRESULT hr3 = a3->raw_OnConnection(0, msaddin::ext_cm_External, 0, 0);
+				HRESULT hr2 = a2->OnConnection(0, msaddin::ext_cm_Startup, 0, 0);
+				HRESULT hr3 = a3->OnConnection(0, msaddin::ext_cm_External, 0, 0);
 				
 				// ASSERT
 				Assert::IsTrue(1 == addin1_novscmdt::instance_count);
@@ -127,7 +127,7 @@ namespace ea
 				
 				// ACT
 				AddinThrowingImpl::CreateInstance(&a);
-				HRESULT hr = a->raw_OnConnection(0, msaddin::ext_cm_AfterStartup, 0, 0);
+				HRESULT hr = a->OnConnection(0, msaddin::ext_cm_AfterStartup, 0, 0);
 				
 				// ASSERT
 				Assert::IsTrue(E_FAIL == hr);
@@ -143,9 +143,9 @@ namespace ea
 				Addin1Impl::CreateInstance(&a1);
 				Addin2Impl::CreateInstance(&a2);
 				Addin2Impl::CreateInstance(&a3);
-				a1->raw_OnConnection(0, msaddin::ext_cm_AfterStartup, 0, 0);
-				a2->raw_OnConnection(0, msaddin::ext_cm_Startup, 0, 0);
-				a3->raw_OnConnection(0, msaddin::ext_cm_External, 0, 0);
+				a1->OnConnection(0, msaddin::ext_cm_AfterStartup, 0, 0);
+				a2->OnConnection(0, msaddin::ext_cm_Startup, 0, 0);
+				a3->OnConnection(0, msaddin::ext_cm_External, 0, 0);
 
 				// ACT
 				a1.Release();
@@ -179,26 +179,26 @@ namespace ea
 				Addin1Impl::CreateInstance(&a1);
 				Addin2Impl::CreateInstance(&a2);
 				Addin2Impl::CreateInstance(&a3);
-				a1->raw_OnConnection(0, msaddin::ext_cm_AfterStartup, 0, 0);
-				a2->raw_OnConnection(0, msaddin::ext_cm_Startup, 0, 0);
-				a3->raw_OnConnection(0, msaddin::ext_cm_External, 0, 0);
+				a1->OnConnection(0, msaddin::ext_cm_AfterStartup, 0, 0);
+				a2->OnConnection(0, msaddin::ext_cm_Startup, 0, 0);
+				a3->OnConnection(0, msaddin::ext_cm_External, 0, 0);
 
 				// ACT
-				a1->raw_OnDisconnection(msaddin::ext_dm_HostShutdown, 0);
+				a1->OnDisconnection(msaddin::ext_dm_HostShutdown, 0);
 				
 				// ASSERT
 				Assert::IsTrue(0 == addin1_novscmdt::instance_count);
 				Assert::IsTrue(2 == addin2_novscmdt::instance_count);
 
 				// ACT
-				a2->raw_OnDisconnection(msaddin::ext_dm_HostShutdown, 0);
+				a2->OnDisconnection(msaddin::ext_dm_HostShutdown, 0);
 				
 				// ASSERT
 				Assert::IsTrue(0 == addin1_novscmdt::instance_count);
 				Assert::IsTrue(1 == addin2_novscmdt::instance_count);
 
 				// ACT
-				a3->raw_OnDisconnection(msaddin::ext_dm_UserClosed, 0);
+				a3->OnDisconnection(msaddin::ext_dm_UserClosed, 0);
 				
 				// ASSERT
 				Assert::IsTrue(0 == addin1_novscmdt::instance_count);
@@ -207,16 +207,16 @@ namespace ea
 
 
 			[TestMethod]
-			void DisconnectionReturnsS_OK()
+			void DisconnectionSucceeds()
 			{
 				// INIT
 				CComPtr<msaddin::IDTExtensibility2> a;
 
 				Addin1Impl::CreateInstance(&a);
-				a->raw_OnConnection(0, msaddin::ext_cm_AfterStartup, 0, 0);
+				a->OnConnection(0, msaddin::ext_cm_AfterStartup, 0, 0);
 
 				// ACT / ASSERT
-				Assert::IsTrue(S_OK == a->raw_OnDisconnection(msaddin::ext_dm_HostShutdown, 0));
+				Assert::IsTrue(S_OK == a->OnDisconnection(msaddin::ext_dm_HostShutdown, 0));
 			}
 		};
 	}
