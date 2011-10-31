@@ -67,13 +67,17 @@ namespace ea
 				static vector< shared_ptr<command> > commands;
 			};
 
-			class mock_command_impl : public command
+			class mock_command_impl : public command, public checked_dtor
 			{
 				wstring _id, _caption, _description;
 
 			public:
 				mock_command_impl(const wstring &id, const wstring &caption, const wstring &description)
 					: _id(id), _caption(caption), _description(description)
+				{	}
+
+				mock_command_impl(const wstring &id, const wstring &caption, const wstring &description, bool &release_flag)
+					: checked_dtor(release_flag), _id(id), _caption(caption), _description(description)
 				{	}
 
 				virtual wstring id() const
@@ -357,6 +361,30 @@ namespace ea
 
 
 			[TestMethod]
+			void CommandsAreNotCreatedOnNonUISetupConnectMode()
+			{
+				// INIT
+				CComPtr<msaddin::IDTExtensibility2> a;
+				CComPtr<DTEMock> dte(new DTEMock);
+				msaddin::AddInPtr addin_instance(new AddInMock);
+
+				addin_with_commandlist::commands.push_back(shared_ptr<command>(new mock_command_impl(
+					L"a", L"A {C8DE681B-F9CB-46FF-96E3-44C8DE97964E}", L"{D4FBBBDD-7730-4E77-BF8D-197920A39E0A}")));
+
+				AddinWithCommandListImpl::CreateInstance(&a);
+
+				// ACT
+				a->OnConnection(dte, msaddin::ext_cm_AfterStartup, (msaddin::AddIn *)addin_instance, 0);
+				a->OnConnection(dte, msaddin::ext_cm_Startup, (msaddin::AddIn *)addin_instance, 0);
+				a->OnConnection(dte, msaddin::ext_cm_External, (msaddin::AddIn *)addin_instance, 0);
+				a->OnConnection(dte, msaddin::ext_cm_CommandLine, (msaddin::AddIn *)addin_instance, 0);
+
+				// ASSERT
+				Assert::IsTrue(dte->commands_list.empty());
+			}
+
+
+			[TestMethod]
 			void CommandsAreCreatedOnUISetup1()
 			{
 				// INIT
@@ -481,6 +509,128 @@ namespace ea
 
 				Assert::IsTrue(dte2->commands_list[1].created_command == c2->update_ui_history[1].first);
 				Assert::IsTrue(dte2->command_bars == c2->update_ui_history[1].second);
+			}
+
+
+			[TestMethod]
+			void AddInImplImplementsCmdTarget()
+			{
+				// INIT
+				CComPtr<msaddin::IDTExtensibility2> a;
+
+				Addin1Impl::CreateInstance(&a);
+
+				// ACT
+				msaddin::IDTCommandTargetPtr cmd_target((IDispatch *)a);
+
+				// ASSERT
+				Assert::IsTrue(cmd_target);
+			}
+
+
+			[TestMethod]
+			void QueryingStatusOrExecFailsIfNotConnected()
+			{
+				// INIT
+				msaddin::IDTCommandTargetPtr cmd_target;
+				shared_ptr<mock_command_impl> c(new mock_command_impl(L"run", L"Run 96E3", L"D4FBBBDD-7730-4E77-BF8D"));
+				msaddin::vsCommandStatus status;
+				VARIANT_BOOL handled;
+
+				addin_with_commandlist::commands.push_back(c);
+				AddinWithCommandListImpl::CreateInstance(&cmd_target);
+
+				// ACT / ASSERT
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_QueryStatus(_bstr_t(L"testaddin.connect.run"), msaddin::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_Exec(_bstr_t(L"testaddin.connect.run"), msaddin::vsCommandExecOptionDoDefault, NULL, NULL, &handled));
+			}
+
+
+			[TestMethod]
+			void QueryingStatusOrExecFailsWhenPrefixOrCommandAreInvalid()
+			{
+				// INIT
+				CComPtr<msaddin::IDTExtensibility2> a;
+				CComPtr<DTEMock> dte(new DTEMock);
+				CComPtr<AddInMock> addin_instance(new AddInMock);
+				msaddin::IDTCommandTargetPtr cmd_target;
+				shared_ptr<mock_command_impl> c(new mock_command_impl(L"run", L"Run 96E3", L"D4FBBBDD-7730-4E77-BF8D"));
+				msaddin::vsCommandStatus status;
+				VARIANT_BOOL handled;
+
+				addin_with_commandlist::commands.push_back(c);
+				AddinWithCommandListImpl::CreateInstance(&a);
+				cmd_target = (IDispatch *)a;
+
+				addin_instance->prog_id = L"TestAddIn.Connect";
+
+				a->OnConnection(dte, msaddin::ext_cm_Startup, addin_instance, 0);
+
+				// ACT / ASSERT
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_QueryStatus(_bstr_t(L"TestAddIn.connect.run"), msaddin::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_Exec(_bstr_t(L"TestAddIn.connect.run"), msaddin::vsCommandExecOptionDoDefault, NULL, NULL, &handled));
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_QueryStatus(_bstr_t(L"TestAddIn2.Connect.run"), msaddin::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_Exec(_bstr_t(L"TestAddIn2.Connect.run"), msaddin::vsCommandExecOptionDoDefault, NULL, NULL, &handled));
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_QueryStatus(_bstr_t(L"TestAddIn.connect.stop"), msaddin::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_Exec(_bstr_t(L"TestAddIn.Connect.stop"), msaddin::vsCommandExecOptionDoDefault, NULL, NULL, &handled));
+				Assert::IsTrue(E_INVALIDARG == cmd_target->raw_QueryStatus(NULL, msaddin::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(E_INVALIDARG == cmd_target->raw_Exec(NULL, msaddin::vsCommandExecOptionDoDefault, NULL, NULL, &handled));
+
+				// INIT
+				addin_instance->prog_id = L"TestAddIn2.Connect";
+
+				a->OnConnection(dte, msaddin::ext_cm_Startup, addin_instance, 0);
+
+				// ACT / ASSERT
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_QueryStatus(_bstr_t(L"TestAddIn2.connect.run"), msaddin::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_Exec(_bstr_t(L"TestAddIn2.connect.run"), msaddin::vsCommandExecOptionDoDefault, NULL, NULL, &handled));
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_QueryStatus(_bstr_t(L"TestAddIn.Connect.run"), msaddin::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_Exec(_bstr_t(L"TestAddIn.Connect.run"), msaddin::vsCommandExecOptionDoDefault, NULL, NULL, &handled));
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_QueryStatus(_bstr_t(L"TestAddIn2.Connect.stop"), msaddin::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_Exec(_bstr_t(L"TestAddIn2.Connect.stop"), msaddin::vsCommandExecOptionDoDefault, NULL, NULL, &handled));
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_QueryStatus(_bstr_t(L"zTestAddIn2.Connect.run"), msaddin::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(E_UNEXPECTED == cmd_target->raw_Exec(_bstr_t(L"zTestAddIn2.Connect.run"), msaddin::vsCommandExecOptionDoDefault, NULL, NULL, &handled));
+			}
+
+
+			[TestMethod]
+			void QueryingStatusOrExecSucceedsIfPrefixIsValid()
+			{
+				// INIT
+				CComPtr<msaddin::IDTExtensibility2> a;
+				CComPtr<DTEMock> dte(new DTEMock);
+				CComPtr<AddInMock> addin_instance(new AddInMock);
+				msaddin::IDTCommandTargetPtr cmd_target;
+				shared_ptr<mock_command_impl> c1(new mock_command_impl(L"run", L"", L""));
+				shared_ptr<mock_command_impl> c2(new mock_command_impl(L"exit", L"", L""));
+				msaddin::vsCommandStatus status;
+				VARIANT_BOOL handled;
+
+				addin_with_commandlist::commands.push_back(c1);
+				addin_with_commandlist::commands.push_back(c2);
+				AddinWithCommandListImpl::CreateInstance(&a);
+				cmd_target = (IDispatch *)a;
+
+				addin_instance->prog_id = L"TestAddIn.Connect";
+
+				a->OnConnection(dte, msaddin::ext_cm_Startup, addin_instance, 0);
+
+				// ACT / ASSERT
+				Assert::IsTrue(S_OK == cmd_target->raw_QueryStatus(_bstr_t(L"TestAddIn.Connect.run"), msaddin::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(S_OK == cmd_target->raw_Exec(_bstr_t(L"TestAddIn.Connect.run"), msaddin::vsCommandExecOptionDoDefault, NULL, NULL, &handled));
+				Assert::IsTrue(S_OK == cmd_target->raw_QueryStatus(_bstr_t(L"TestAddIn.Connect.exit"), msaddin::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(S_OK == cmd_target->raw_Exec(_bstr_t(L"TestAddIn.Connect.exit"), msaddin::vsCommandExecOptionDoDefault, NULL, NULL, &handled));
+
+				// INIT
+				addin_instance->prog_id = L"TestAddIn2.Connect";
+
+				a->OnConnection(dte, msaddin::ext_cm_Startup, addin_instance, 0);
+
+				// ACT / ASSERT
+				Assert::IsTrue(S_OK == cmd_target->raw_QueryStatus(_bstr_t(L"TestAddIn2.Connect.run"), msaddin::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(S_OK == cmd_target->raw_Exec(_bstr_t(L"TestAddIn2.Connect.run"), msaddin::vsCommandExecOptionDoDefault, NULL, NULL, &handled));
+				Assert::IsTrue(S_OK == cmd_target->raw_QueryStatus(_bstr_t(L"TestAddIn2.Connect.exit"), msaddin::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(S_OK == cmd_target->raw_Exec(_bstr_t(L"TestAddIn2.Connect.exit"), msaddin::vsCommandExecOptionDoDefault, NULL, NULL, &handled));
 			}
 		};
 	}

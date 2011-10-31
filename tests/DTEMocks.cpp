@@ -57,5 +57,13 @@ namespace ea
 			: base_type(released_flag)
 		{	}
 
+		STDMETHODIMP AddInMock::Invoke(DISPID dispIdMember, REFIID /*riid*/, LCID /*lcid*/, WORD wFlags, DISPPARAMS * /*pDispParams*/, VARIANT *pVarResult, EXCEPINFO * /*pExcepInfo*/, UINT * /*puArgErr*/)
+		{
+			if (3 == dispIdMember && (DISPATCH_PROPERTYGET & wFlags))
+				*pVarResult = _variant_t(prog_id.c_str()).Detach();
+			else
+				return E_NOTIMPL;
+			return S_OK;
+		}
 	}
 }
