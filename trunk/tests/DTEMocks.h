@@ -13,11 +13,30 @@ namespace ea
 {
 	namespace tests
 	{
+		class checked_dtor
+		{
+			bool *_released_flag;
+
+		public:
+			checked_dtor(bool &released_flag)
+				: _released_flag(&released_flag)
+			{	}
+
+			checked_dtor()
+				: _released_flag(0)
+			{	}
+
+			virtual ~checked_dtor()
+			{
+				if (_released_flag)
+					*_released_flag = true;
+			}
+		};
+
 		template <typename InterfaceT>
-		class mock_com_object : public InterfaceT
+		class mock_com_object : public InterfaceT, public checked_dtor
 		{
 			int _references;
-			bool *_released_flag;
 
 		public:
 			STDMETHODIMP QueryInterface(REFIID riid, void **ppvObject)
@@ -59,18 +78,12 @@ namespace ea
 
 		public:
 			mock_com_object()
-				: _released_flag(0), _references(0)
+				: _references(0)
 			{	}
 
 			mock_com_object(bool &released_flag)
-				: _released_flag(&released_flag), _references(0)
+				: checked_dtor(released_flag), _references(0)
 			{	}
-
-			virtual ~mock_com_object()
-			{
-				if(_released_flag)
-					*_released_flag = true;
-			}
 		};
 
 
@@ -184,6 +197,8 @@ namespace ea
 
 		class AddInMock : public mock_com_object<msaddin::AddIn>
 		{
+			STDMETHODIMP Invoke(DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr);
+
 			STDMETHODIMP get_Description(BSTR * /*lpbstr*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP put_Description(BSTR /*lpbstr*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP get_Collection(msaddin::AddIns ** /*lppaddins*/)	{	return E_NOTIMPL;	}
@@ -201,6 +216,8 @@ namespace ea
 		public:
 			AddInMock();
 			AddInMock(bool &released_flag);
+
+			std::wstring prog_id;
 		};
 	}
 }
