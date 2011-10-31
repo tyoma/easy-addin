@@ -85,8 +85,10 @@ namespace ea
 				virtual wstring description() const
 				{	return _description;	}
 
-				virtual void update_ui(msaddin::CommandPtr /*cmd*/, IDispatchPtr /*command_bars*/) const
-				{	}
+				mutable vector< pair<msaddin::CommandPtr /*cmd*/, IDispatchPtr /*command_bars*/> > update_ui_history;
+
+				virtual void update_ui(msaddin::CommandPtr cmd, IDispatchPtr command_bars) const
+				{	update_ui_history.push_back(make_pair(cmd, command_bars));	}
 
 				virtual bool query_status(msaddin::_DTEPtr /*dte*/, bool &/*enabled*/, wstring * /*caption*/, wstring * /*description*/) const
 				{	return true;	}
@@ -430,9 +432,55 @@ namespace ea
 
 				// ACT
 				addin_instance = 0;
+				dte->commands_list.clear();
 
 				// ASSERT
-				Assert::IsFalse(addin_instance_released);
+				Assert::IsTrue(addin_instance_released);
+			}
+
+
+			[TestMethod]
+			void UICreationIsRequestedForEachCommandCreated()
+			{
+				// INIT
+				bool addin_instance_released = false;
+				msaddin::AddInPtr addin_instance(new AddInMock(addin_instance_released));
+				CComPtr<msaddin::IDTExtensibility2> a;
+				CComPtr<DTEMock> dte1(new DTEMock), dte2(new DTEMock);
+				shared_ptr<mock_command_impl> c1(new mock_command_impl(L"run", L"Run 96E3", L"D4FBBBDD-7730-4E77-BF8D"));
+				shared_ptr<mock_command_impl> c2(new mock_command_impl(L"stop", L"Stop DDEE9F6E9817", L"BF8D"));
+
+				addin_with_commandlist::commands.push_back(c1);
+				addin_with_commandlist::commands.push_back(c2);
+
+				AddinWithCommandListImpl::CreateInstance(&a);
+
+				// ACT
+				a->OnConnection(dte1, (msaddin::ext_ConnectMode)5, (msaddin::AddIn *)addin_instance, 0);
+
+				// ASSERT
+				Assert::IsTrue(1 == c1->update_ui_history.size());
+				Assert::IsTrue(1 == c2->update_ui_history.size());
+
+				Assert::IsTrue(dte1->commands_list[0].created_command);
+				Assert::IsTrue(dte1->commands_list[0].created_command == c1->update_ui_history[0].first);
+				Assert::IsTrue(dte1->command_bars == c1->update_ui_history[0].second);
+
+				Assert::IsTrue(dte1->commands_list[1].created_command == c2->update_ui_history[0].first);
+				Assert::IsTrue(dte1->command_bars == c2->update_ui_history[0].second);
+
+				// ACT
+				a->OnConnection(dte2, (msaddin::ext_ConnectMode)5, (msaddin::AddIn *)addin_instance, 0);
+
+				// ASSERT
+				Assert::IsTrue(2 == c1->update_ui_history.size());
+				Assert::IsTrue(2 == c2->update_ui_history.size());
+
+				Assert::IsTrue(dte2->commands_list[0].created_command == c1->update_ui_history[1].first);
+				Assert::IsTrue(dte2->command_bars == c1->update_ui_history[1].second);
+
+				Assert::IsTrue(dte2->commands_list[1].created_command == c2->update_ui_history[1].first);
+				Assert::IsTrue(dte2->command_bars == c2->update_ui_history[1].second);
 			}
 		};
 	}

@@ -79,7 +79,7 @@ namespace ea
 			STDMETHODIMP get_Name(BSTR * /*lpbstrReturn*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP get_FileName(BSTR * /*lpbstrReturn*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP get_Version(BSTR * /*lpbstrReturn*/)	{	return E_NOTIMPL;	}
-			STDMETHODIMP get_CommandBars(IDispatch ** /*ppcbs*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_CommandBars(IDispatch **ppcbs);
 			STDMETHODIMP get_Windows(msaddin::Windows ** /*ppwnsVBWindows*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP get_Events(msaddin::Events ** /*ppevtEvents*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP get_AddIns(msaddin::AddIns ** /*lpppAddIns*/)	{	return E_NOTIMPL;	}
@@ -134,9 +134,11 @@ namespace ea
 			{
 				msaddin::AddInPtr addin_instance;
 				std::wstring id, caption, description;
+				msaddin::CommandPtr created_command;
 			};
 
 			std::vector<command> commands_list;
+			IDispatchPtr command_bars;
 		};
 
 
@@ -158,6 +160,25 @@ namespace ea
 
 		public:
 			CommandsMock(std::vector<DTEMock::command> &commands_list);
+		};
+
+
+		class CommandMock : public mock_com_object<msaddin::Command>
+		{
+			STDMETHODIMP get_Name(BSTR * /*lpbstr*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_Collection(msaddin::Commands ** /*lppcReturn*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_DTE(msaddin::_DTE ** /*lppaReturn*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_Guid(BSTR * /*lpbstr*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_ID(long * /*lReturn*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_IsAvailable(VARIANT_BOOL * /*pAvail*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP raw_AddControl(IDispatch * /*Owner*/, long /*Position*/, IDispatch ** /*pCommandBarControl*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP raw_Delete()	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_Bindings(VARIANT * /*pVar*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP put_Bindings(VARIANT /*pVar*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_LocalizedName(BSTR * /*lpbstr*/)	{	return E_NOTIMPL;	}
+
+		public:
+			CommandMock();
 		};
 
 

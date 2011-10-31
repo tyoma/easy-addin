@@ -144,9 +144,11 @@ namespace ea
 	{
 		using namespace std;
 
+		IDispatchPtr command_bars;
 		msaddin::CommandsPtr dte_commands;
 		vector< shared_ptr<command> > commands;
 
+		dte->get_CommandBars(&command_bars);
 		dte->get_Commands(&dte_commands);
 		application->get_commands(commands);
 		for (vector< shared_ptr<command> >::const_iterator i = commands.begin(); i != commands.end(); ++i)
@@ -154,7 +156,7 @@ namespace ea
 			msaddin::CommandPtr dte_command;
 
 			dte_commands->raw_AddNamedCommand(addin_instance, str2bstr((*i)->id()), str2bstr((*i)->caption()), str2bstr((*i)->description()), VARIANT_TRUE, 0, NULL, 16, &dte_command);
-
+			(*i)->update_ui(dte_command, command_bars);
 		}
 	}
 }
