@@ -5,6 +5,7 @@
 #include <atlbase.h>
 #include <atlcom.h>
 
+using namespace std;
 using namespace System;
 using namespace Microsoft::VisualStudio::TestTools::UnitTesting;
 
@@ -55,20 +56,71 @@ namespace ea
 				static msaddin::_DTEPtr dte;
 			};
 
+			struct __declspec(uuid("9D26A098-715F-454A-8FD1-7D73ECEE3001")) addin_with_commandlist : command_target
+			{
+				addin_with_commandlist(msaddin::_DTEPtr /*dte*/)
+				{	}
+
+				void get_commands(vector< shared_ptr<command> > &commands) const
+				{	commands = addin_with_commandlist::commands;	}
+
+				static vector< shared_ptr<command> > commands;
+			};
+
+			class mock_command_impl : public command
+			{
+				wstring _id, _caption, _description;
+
+			public:
+				mock_command_impl(const wstring &id, const wstring &caption, const wstring &description)
+					: _id(id), _caption(caption), _description(description)
+				{	}
+
+				virtual wstring id() const
+				{	return _id;	}
+
+				virtual wstring caption() const
+				{	return _caption;	}
+
+				virtual wstring description() const
+				{	return _description;	}
+
+				virtual void update_ui(msaddin::CommandPtr /*cmd*/, IDispatchPtr /*command_bars*/) const
+				{	}
+
+				virtual bool query_status(msaddin::_DTEPtr /*dte*/, bool &/*enabled*/, wstring * /*caption*/, wstring * /*description*/) const
+				{	return true;	}
+
+				virtual void execute(msaddin::_DTEPtr /*dte*/, VARIANT * /*input*/, VARIANT * /*output*/) const
+				{	}
+			};
+
 			int addin1_novscmdt::instance_count = 0;
 			int addin2_novscmdt::instance_count = 0;
 			msaddin::_DTEPtr addin_with_param_storing::dte;
+			vector< shared_ptr<command> > addin_with_commandlist::commands;
 
 			typedef addin<addin1_novscmdt, &__uuidof(addin1_novscmdt), 123> Addin1Impl;
 			typedef addin<addin2_novscmdt, &__uuidof(addin2_novscmdt), 234> Addin2Impl;
 			typedef addin<addin_throwing_novscmdt, &__uuidof(addin_throwing_novscmdt), 234> AddinThrowingImpl;
 			typedef addin<addin_with_param_storing, &__uuidof(addin_with_param_storing), 234> AddinParamStoringImpl;
+			typedef addin<addin_with_commandlist, &__uuidof(addin_with_commandlist), 234> AddinWithCommandListImpl;
 		}
 
 		[TestClass]
 		public ref class EasyAddinTests
 		{
 		public:
+			[TestInitialize]
+			[TestCleanup]
+			void init()
+			{
+				addin1_novscmdt::instance_count = 0;
+				addin2_novscmdt::instance_count = 0;
+				addin_with_param_storing::dte = 0;
+				addin_with_commandlist::commands.clear();
+			}
+
 			[TestMethod]
 			void CreateAddinInstance()
 			{
@@ -282,6 +334,89 @@ namespace ea
 
 				// ASSERT
 				Assert::IsTrue(released);
+			}
+
+
+			[TestMethod]
+			void DoNotCreateCommandsForEmptyAddinCommandsList()
+			{
+				// INIT
+				CComPtr<msaddin::IDTExtensibility2> a;
+				CComPtr<DTEMock> dte(new DTEMock);
+
+				AddinWithCommandListImpl::CreateInstance(&a);
+
+				// ACT
+				a->OnConnection(dte, (msaddin::ext_ConnectMode)5, 0, 0);
+
+				// ASSERT
+				Assert::IsTrue(dte->commands_list.empty());
+			}
+
+
+			[TestMethod]
+			void CommandsAreCreatedOnUISetup1()
+			{
+				// INIT
+				CComPtr<msaddin::IDTExtensibility2> a;
+				CComPtr<DTEMock> dte(new DTEMock);
+
+				addin_with_commandlist::commands.push_back(shared_ptr<command>(new mock_command_impl(
+					L"a", L"A {C8DE681B-F9CB-46FF-96E3-44C8DE97964E}", L"{D4FBBBDD-7730-4E77-BF8D-197920A39E0A}")));
+				addin_with_commandlist::commands.push_back(shared_ptr<command>(new mock_command_impl(
+					L"b", L"B {9633565D-55D0-4A17-8DAF-15604DDB3491}", L"{7FA3A73A-4D80-407B-8CA4-0C7904526197} {D4FBBBDD-7730-4E77-BF8D-197920A39E0A}")));
+				addin_with_commandlist::commands.push_back(shared_ptr<command>(new mock_command_impl(
+					L"c", L"C {7B718B04-91E7-4EA3-97AE-DDEE9F6E9817}", L"BF8D 197920A39E0A")));
+
+				AddinWithCommandListImpl::CreateInstance(&a);
+
+				// ACT
+				a->OnConnection(dte, (msaddin::ext_ConnectMode)5, 0, 0);
+
+				// ASSERT
+				Assert::IsTrue(3 == dte->commands_list.size());
+
+				Assert::IsTrue(L"a" == dte->commands_list[0].id);
+				Assert::IsTrue(L"A {C8DE681B-F9CB-46FF-96E3-44C8DE97964E}" == dte->commands_list[0].caption);
+				Assert::IsTrue(L"{D4FBBBDD-7730-4E77-BF8D-197920A39E0A}" == dte->commands_list[0].description);
+
+				Assert::IsTrue(L"b" == dte->commands_list[1].id);
+				Assert::IsTrue(L"B {9633565D-55D0-4A17-8DAF-15604DDB3491}" == dte->commands_list[1].caption);
+				Assert::IsTrue(L"{7FA3A73A-4D80-407B-8CA4-0C7904526197} {D4FBBBDD-7730-4E77-BF8D-197920A39E0A}" == dte->commands_list[1].description);
+
+				Assert::IsTrue(L"c" == dte->commands_list[2].id);
+				Assert::IsTrue(L"C {7B718B04-91E7-4EA3-97AE-DDEE9F6E9817}" == dte->commands_list[2].caption);
+				Assert::IsTrue(L"BF8D 197920A39E0A" == dte->commands_list[2].description);
+			}
+
+
+			[TestMethod]
+			void CommandsAreCreatedOnUISetup2()
+			{
+				// INIT
+				CComPtr<msaddin::IDTExtensibility2> a;
+				CComPtr<DTEMock> dte(new DTEMock);
+
+				addin_with_commandlist::commands.push_back(shared_ptr<command>(new mock_command_impl(
+					L"run", L"Run 96E3", L"D4FBBBDD-7730-4E77-BF8D")));
+				addin_with_commandlist::commands.push_back(shared_ptr<command>(new mock_command_impl(
+					L"stop", L"Stop DDEE9F6E9817", L"BF8D")));
+
+				AddinWithCommandListImpl::CreateInstance(&a);
+
+				// ACT
+				a->OnConnection(dte, (msaddin::ext_ConnectMode)5, 0, 0);
+
+				// ASSERT
+				Assert::IsTrue(2 == dte->commands_list.size());
+
+				Assert::IsTrue(L"run" == dte->commands_list[0].id);
+				Assert::IsTrue(L"Run 96E3" == dte->commands_list[0].caption);
+				Assert::IsTrue(L"D4FBBBDD-7730-4E77-BF8D" == dte->commands_list[0].description);
+
+				Assert::IsTrue(L"stop" == dte->commands_list[1].id);
+				Assert::IsTrue(L"Stop DDEE9F6E9817" == dte->commands_list[1].caption);
+				Assert::IsTrue(L"BF8D" == dte->commands_list[1].description);
 			}
 		};
 	}
