@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 #pragma warning(disable: 4278)
 #pragma warning(disable: 4146)
 	#import <dte80a.olb> rename_namespace("msaddin")
@@ -55,8 +58,12 @@ namespace ea
 			typedef mock_com_object base_type;
 
 		protected:
-			mock_com_object(bool *released_flag)
-				: _released_flag(released_flag), _references(0)
+			mock_com_object()
+				: _released_flag(0), _references(0)
+			{	}
+
+			mock_com_object(bool &released_flag)
+				: _released_flag(&released_flag), _references(0)
 			{	}
 
 			virtual ~mock_com_object()
@@ -82,7 +89,7 @@ namespace ea
 			STDMETHODIMP get_DisplayMode(msaddin::vsDisplay * /*lpDispMode*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP put_DisplayMode(msaddin::vsDisplay /*lpDispMode*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP get_Solution(msaddin::_Solution ** /*ppSolution*/)	{	return E_NOTIMPL;	}
-			STDMETHODIMP get_Commands(msaddin::Commands ** /*ppCommands*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_Commands(msaddin::Commands **ppCommands);
 			STDMETHODIMP raw_GetObject(BSTR /*Name*/, IDispatch ** /*ppObject*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP get_Properties(BSTR /*Category*/, BSTR /*Page*/, msaddin::Properties ** /*ppObject*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP get_SelectedItems(msaddin::SelectedItems ** /*ppSelectedItems*/)	{	return E_NOTIMPL;	}
@@ -120,13 +127,36 @@ namespace ea
 			STDMETHODIMP get_Edition(BSTR * /*ProductEdition*/)	{	return E_NOTIMPL;	}
 
 		public:
-			DTEMock()
-				: base_type(0)
-			{	}
+			DTEMock();
+			DTEMock(bool &released_flag);
 
-			DTEMock(bool &released_flag)
-				: base_type(&released_flag)
-			{	}
+			struct command
+			{
+				std::wstring id, caption, description;
+			};
+
+			std::vector<command> commands_list;
+		};
+
+
+		class CommandsMock : public mock_com_object<msaddin::Commands>
+		{
+			std::vector<DTEMock::command> *_commands_list;
+
+			STDMETHODIMP get_DTE(msaddin::_DTE ** /*lppaReturn*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_Parent(msaddin::_DTE ** /*lppaReturn*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP raw_Add(BSTR /*Guid*/, long /*ID*/, VARIANT * /*Control*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP raw_Raise(BSTR /*Guid*/, long /*ID*/, VARIANT * /*CustomIn*/, VARIANT * /*CustomOut*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP raw_CommandInfo(IDispatch * /*CommandBarControl*/, BSTR * /*Guid*/, long * /*ID*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_Count(long * /*lplReturn*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP raw_Item(VARIANT /*index*/, long /*ID*/, msaddin::Command ** /*lppcReturn*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP raw__NewEnum(IUnknown ** /*lppiuReturn*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP raw_AddNamedCommand(msaddin::AddIn *AddInInstance, BSTR Name, BSTR ButtonText, BSTR Tooltip, VARIANT_BOOL MSOButton, long Bitmap, SAFEARRAY **ContextUIGUIDs, long vsCommandDisabledFlagsValue, msaddin::Command **pVal);
+			STDMETHODIMP raw_AddCommandBar(BSTR /*Name*/, msaddin::vsCommandBarType /*Type*/, IDispatch * /*CommandBarParent*/, long /*Position*/, IDispatch ** /*pVal*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP raw_RemoveCommandBar(IDispatch * /*CommandBar*/)	{	return E_NOTIMPL;	}
+
+		public:
+			CommandsMock(std::vector<DTEMock::command> &commands_list);
 		};
 	}
 }
