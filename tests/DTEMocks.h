@@ -57,7 +57,7 @@ namespace ea
 		protected:
 			typedef mock_com_object base_type;
 
-		protected:
+		public:
 			mock_com_object()
 				: _released_flag(0), _references(0)
 			{	}
@@ -132,6 +132,7 @@ namespace ea
 
 			struct command
 			{
+				msaddin::AddInPtr addin_instance;
 				std::wstring id, caption, description;
 			};
 
@@ -157,6 +158,28 @@ namespace ea
 
 		public:
 			CommandsMock(std::vector<DTEMock::command> &commands_list);
+		};
+
+
+		class AddInMock : public mock_com_object<msaddin::AddIn>
+		{
+			STDMETHODIMP get_Description(BSTR * /*lpbstr*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP put_Description(BSTR /*lpbstr*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_Collection(msaddin::AddIns ** /*lppaddins*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_ProgID(BSTR * /*lpbstr*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_Guid(BSTR * /*lpbstr*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_Connected(VARIANT_BOOL * /*lpfConnect*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP put_Connected(VARIANT_BOOL /*lpfConnect*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_Object(IDispatch ** /*lppdisp*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP put_Object(IDispatch * /*lppdisp*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_DTE(msaddin::_DTE ** /*lppaReturn*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_Name(BSTR * /*lpbstr*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP raw_Remove()	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_SatelliteDllPath(BSTR * /*pbstrPath*/)	{	return E_NOTIMPL;	}
+
+		public:
+			AddInMock();
+			AddInMock(bool &released_flag);
 		};
 	}
 }

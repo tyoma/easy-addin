@@ -26,12 +26,24 @@ namespace ea
 			Assert::IsTrue(::SysStringLen(Name) == wcslen(Name));
 			Assert::IsTrue(::SysStringLen(ButtonText) == wcslen(ButtonText));
 			Assert::IsTrue(::SysStringLen(Tooltip) == wcslen(Tooltip));
-
-			DTEMock::command c = {	Name, ButtonText, Tooltip	};
+			Assert::IsTrue(VARIANT_TRUE == MSOButton);
+			Assert::IsTrue(0 == ContextUIGUIDs);
+			Assert::IsTrue(16 == vsCommandDisabledFlagsValue);
+			
+			DTEMock::command c = {	AddInInstance, Name, ButtonText, Tooltip	};
 
 			_commands_list->push_back(c);
 
 			return S_OK;
 		}
+
+
+		AddInMock::AddInMock()
+		{	}
+
+		AddInMock::AddInMock(bool &released_flag)
+			: base_type(released_flag)
+		{	}
+
 	}
 }
