@@ -29,7 +29,7 @@
 #pragma warning(disable: 4278)
 #pragma warning(disable: 4146)
 	#import <MSADDNDR.DLL> raw_interfaces_only rename_namespace("msaddin")
-	#import <dte80a.olb> rename_namespace("msaddin")
+	#import <dte80a.olb> rename_namespace("msaddin") no_implementation
 #pragma warning(default: 4146)
 #pragma warning(default: 4278)
 
@@ -61,8 +61,8 @@ namespace ea
 		STDMETHODIMP OnStartupComplete(SAFEARRAY **custom);
 		STDMETHODIMP OnBeginShutdown(SAFEARRAY **custom);
 
-		static void setup_ui(void *application, msaddin::_DTEPtr dte, IDispatchPtr addin_instance);
-		static void setup_ui(command_target *application, msaddin::_DTEPtr dte, IDispatchPtr addin_instance);
+		static void setup_ui(void *application, msaddin::_DTEPtr dte, msaddin::AddInPtr addin_instance);
+		static void setup_ui(command_target *application, msaddin::_DTEPtr dte, msaddin::AddInPtr addin_instance);
 
 	public:
 		DECLARE_REGISTRY_RESOURCEID(RegResID)
@@ -95,14 +95,14 @@ namespace ea
 
 	
 	template <class AppT, const CLSID *ClassID, int RegResID>
-	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::OnConnection(IDispatch *host, msaddin::ext_ConnectMode connectMode, IDispatch * /*instance*/, SAFEARRAY ** /*custom*/)
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::OnConnection(IDispatch *host, msaddin::ext_ConnectMode connectMode, IDispatch *instance, SAFEARRAY ** /*custom*/)
 	try
 	{
 		msaddin::_DTEPtr dte(host);
 
 		_application.reset(new AppT(dte));
 		if (5 /*ext_cm_UISetup*/ == connectMode)
-			setup_ui(_application.get(), dte, 0);			
+			setup_ui(_application.get(), dte, instance);
 		return S_OK;
 	}
 	catch (...)
@@ -136,11 +136,11 @@ namespace ea
 	}
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
-	inline void addin<AppT, ClassID, RegResID>::setup_ui(void * /*application*/, msaddin::_DTEPtr /*dte*/, IDispatchPtr /*addin_instance*/)
+	inline void addin<AppT, ClassID, RegResID>::setup_ui(void * /*application*/, msaddin::_DTEPtr /*dte*/, msaddin::AddInPtr /*addin_instance*/)
 	{	}
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
-	inline void addin<AppT, ClassID, RegResID>::setup_ui(command_target *application, msaddin::_DTEPtr dte, IDispatchPtr /*addin_instance*/)
+	inline void addin<AppT, ClassID, RegResID>::setup_ui(command_target *application, msaddin::_DTEPtr dte, msaddin::AddInPtr addin_instance)
 	{
 		using namespace std;
 
@@ -153,7 +153,7 @@ namespace ea
 		{
 			msaddin::CommandPtr dte_command;
 
-			dte_commands->raw_AddNamedCommand(0, str2bstr((*i)->id()), str2bstr((*i)->caption()), str2bstr((*i)->description()), VARIANT_TRUE, 0, NULL, 0, &dte_command);
+			dte_commands->raw_AddNamedCommand(addin_instance, str2bstr((*i)->id()), str2bstr((*i)->caption()), str2bstr((*i)->description()), VARIANT_TRUE, 0, NULL, 16, &dte_command);
 
 		}
 	}

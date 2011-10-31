@@ -360,6 +360,7 @@ namespace ea
 				// INIT
 				CComPtr<msaddin::IDTExtensibility2> a;
 				CComPtr<DTEMock> dte(new DTEMock);
+				msaddin::AddInPtr addin_instance(new AddInMock);
 
 				addin_with_commandlist::commands.push_back(shared_ptr<command>(new mock_command_impl(
 					L"a", L"A {C8DE681B-F9CB-46FF-96E3-44C8DE97964E}", L"{D4FBBBDD-7730-4E77-BF8D-197920A39E0A}")));
@@ -370,20 +371,23 @@ namespace ea
 
 				AddinWithCommandListImpl::CreateInstance(&a);
 
-				// ACT
-				a->OnConnection(dte, (msaddin::ext_ConnectMode)5, 0, 0);
+				// ACT / ASSERT
+				Assert::IsTrue(S_OK == a->OnConnection(dte, (msaddin::ext_ConnectMode)5, (msaddin::AddIn *)addin_instance, 0));
 
 				// ASSERT
 				Assert::IsTrue(3 == dte->commands_list.size());
 
+				Assert::IsTrue(IUnknownPtr(addin_instance) == IUnknownPtr(dte->commands_list[0].addin_instance));
 				Assert::IsTrue(L"a" == dte->commands_list[0].id);
 				Assert::IsTrue(L"A {C8DE681B-F9CB-46FF-96E3-44C8DE97964E}" == dte->commands_list[0].caption);
 				Assert::IsTrue(L"{D4FBBBDD-7730-4E77-BF8D-197920A39E0A}" == dte->commands_list[0].description);
-
+				
+				Assert::IsTrue(IUnknownPtr(addin_instance) == IUnknownPtr(dte->commands_list[1].addin_instance));
 				Assert::IsTrue(L"b" == dte->commands_list[1].id);
 				Assert::IsTrue(L"B {9633565D-55D0-4A17-8DAF-15604DDB3491}" == dte->commands_list[1].caption);
 				Assert::IsTrue(L"{7FA3A73A-4D80-407B-8CA4-0C7904526197} {D4FBBBDD-7730-4E77-BF8D-197920A39E0A}" == dte->commands_list[1].description);
 
+				Assert::IsTrue(IUnknownPtr(addin_instance) == dte->commands_list[2].addin_instance);
 				Assert::IsTrue(L"c" == dte->commands_list[2].id);
 				Assert::IsTrue(L"C {7B718B04-91E7-4EA3-97AE-DDEE9F6E9817}" == dte->commands_list[2].caption);
 				Assert::IsTrue(L"BF8D 197920A39E0A" == dte->commands_list[2].description);
@@ -394,6 +398,8 @@ namespace ea
 			void CommandsAreCreatedOnUISetup2()
 			{
 				// INIT
+				bool addin_instance_released = false;
+				msaddin::AddInPtr addin_instance(new AddInMock(addin_instance_released));
 				CComPtr<msaddin::IDTExtensibility2> a;
 				CComPtr<DTEMock> dte(new DTEMock);
 
@@ -405,18 +411,28 @@ namespace ea
 				AddinWithCommandListImpl::CreateInstance(&a);
 
 				// ACT
-				a->OnConnection(dte, (msaddin::ext_ConnectMode)5, 0, 0);
+				Assert::IsTrue(S_OK == a->OnConnection(dte, (msaddin::ext_ConnectMode)5, (msaddin::AddIn *)addin_instance, 0));
 
 				// ASSERT
 				Assert::IsTrue(2 == dte->commands_list.size());
 
+				Assert::IsTrue(IUnknownPtr(addin_instance) == IUnknownPtr(dte->commands_list[0].addin_instance));
 				Assert::IsTrue(L"run" == dte->commands_list[0].id);
 				Assert::IsTrue(L"Run 96E3" == dte->commands_list[0].caption);
 				Assert::IsTrue(L"D4FBBBDD-7730-4E77-BF8D" == dte->commands_list[0].description);
 
+				Assert::IsTrue(IUnknownPtr(addin_instance) == IUnknownPtr(dte->commands_list[1].addin_instance));
 				Assert::IsTrue(L"stop" == dte->commands_list[1].id);
 				Assert::IsTrue(L"Stop DDEE9F6E9817" == dte->commands_list[1].caption);
 				Assert::IsTrue(L"BF8D" == dte->commands_list[1].description);
+
+				Assert::IsFalse(addin_instance_released);
+
+				// ACT
+				addin_instance = 0;
+
+				// ASSERT
+				Assert::IsFalse(addin_instance_released);
 			}
 		};
 	}
