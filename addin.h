@@ -28,7 +28,7 @@
 
 #pragma warning(disable: 4278)
 	#import <msaddndr.dll> rename_namespace("msaddin") raw_interfaces_only
-	#import <dte80a.olb> rename_namespace("msaddin") no_implementation
+	#import <dte80a.olb> no_implementation
 #pragma warning(default: 4278)
 
 namespace std
@@ -50,9 +50,9 @@ namespace ea
 		: public CComObjectRootEx<CComSingleThreadModel>,
 			public CComCoClass<addin<AppT, ClassID, RegResID>, ClassID>,
 			public IDispatchImpl<msaddin::IDTExtensibility2, &__uuidof(msaddin::IDTExtensibility2), &__uuidof(msaddin::__AddInDesignerObjects), 1, 0>,
-			public IDispatchImpl<msaddin::IDTCommandTarget, &__uuidof(msaddin::IDTCommandTarget), &__uuidof(msaddin::__EnvDTE), 7, 0>
+			public IDispatchImpl<EnvDTE::IDTCommandTarget, &__uuidof(EnvDTE::IDTCommandTarget), &__uuidof(EnvDTE::__EnvDTE), 7, 0>
 	{
-		msaddin::_DTEPtr _dte;
+		EnvDTE::_DTEPtr _dte;
 		std::wstring _regid;
 		std::auto_ptr<AppT> _application;
 		std::vector<command_ptr> _commands;
@@ -65,13 +65,13 @@ namespace ea
 		STDMETHODIMP OnBeginShutdown(SAFEARRAY **custom);
 
 		// IDTCommandTarget methods
-		STDMETHODIMP raw_QueryStatus(BSTR id, msaddin::vsCommandStatusTextWanted needed_text, msaddin::vsCommandStatus *status, VARIANT *text);
-		STDMETHODIMP raw_Exec(BSTR id, msaddin::vsCommandExecOption execute_option, VARIANT *input, VARIANT *output, VARIANT_BOOL *handled);
+		STDMETHODIMP raw_QueryStatus(BSTR id, EnvDTE::vsCommandStatusTextWanted needed_text, EnvDTE::vsCommandStatus *status, VARIANT *text);
+		STDMETHODIMP raw_Exec(BSTR id, EnvDTE::vsCommandExecOption execute_option, VARIANT *input, VARIANT *output, VARIANT_BOOL *handled);
 
 		void query_commands(void *application);
 		void query_commands(command_target *application);
 
-		void setup_ui(msaddin::_DTEPtr dte, msaddin::AddInPtr addin_instance);
+		void setup_ui(EnvDTE::_DTEPtr dte, EnvDTE::AddInPtr addin_instance);
 
 		command_ptr find_command(std::wstring id) const;
 
@@ -82,7 +82,7 @@ namespace ea
 		BEGIN_COM_MAP(addin)
 			COM_INTERFACE_ENTRY2(IDispatch, msaddin::IDTExtensibility2)
 			COM_INTERFACE_ENTRY(msaddin::IDTExtensibility2)
-			COM_INTERFACE_ENTRY(msaddin::IDTCommandTarget)
+			COM_INTERFACE_ENTRY(EnvDTE::IDTCommandTarget)
 		END_COM_MAP()
 	};
 
@@ -100,9 +100,9 @@ namespace ea
 		virtual std::wstring id() const = 0;
 		virtual std::wstring caption() const = 0;
 		virtual std::wstring description() const = 0;
-		virtual void update_ui(msaddin::CommandPtr cmd, IDispatchPtr command_bars) const = 0;
-		virtual bool query_status(msaddin::_DTEPtr dte, bool &checked, std::wstring *caption, std::wstring *description) const = 0;
-		virtual void execute(msaddin::_DTEPtr dte, VARIANT *input, VARIANT *output) const = 0;
+		virtual void update_ui(EnvDTE::CommandPtr cmd, IDispatchPtr command_bars) const = 0;
+		virtual bool query_status(EnvDTE::_DTEPtr dte, bool &checked, std::wstring *caption, std::wstring *description) const = 0;
+		virtual void execute(EnvDTE::_DTEPtr dte, VARIANT *input, VARIANT *output) const = 0;
 	};
 
 	
@@ -153,7 +153,7 @@ namespace ea
 	{	return E_NOTIMPL;	}
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
-	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_QueryStatus(BSTR id, msaddin::vsCommandStatusTextWanted /*needed_text*/, msaddin::vsCommandStatus *status, VARIANT * /*text*/)
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_QueryStatus(BSTR id, EnvDTE::vsCommandStatusTextWanted /*needed_text*/, EnvDTE::vsCommandStatus *status, VARIANT * /*text*/)
 	{
 		if (id == NULL)
 			return E_INVALIDARG;
@@ -162,14 +162,14 @@ namespace ea
 			bool checked;
 			bool enabled = c->query_status(_dte, checked, 0, 0);
 
-			*status = static_cast<msaddin::vsCommandStatus>(msaddin::vsCommandStatusSupported + (enabled ? msaddin::vsCommandStatusEnabled : 0) + (checked ? msaddin::vsCommandStatusLatched : 0));
+			*status = static_cast<EnvDTE::vsCommandStatus>(EnvDTE::vsCommandStatusSupported + (enabled ? EnvDTE::vsCommandStatusEnabled : 0) + (checked ? EnvDTE::vsCommandStatusLatched : 0));
 			return S_OK;
 		}
 		return E_UNEXPECTED;
 	}
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
-	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_Exec(BSTR id, msaddin::vsCommandExecOption /*execute_option*/, VARIANT *input, VARIANT *output, VARIANT_BOOL *handled)
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_Exec(BSTR id, EnvDTE::vsCommandExecOption /*execute_option*/, VARIANT *input, VARIANT *output, VARIANT_BOOL *handled)
 	{
 		if (id == NULL)
 			return E_INVALIDARG;
@@ -194,19 +194,19 @@ namespace ea
 	}
 	
 	template <class AppT, const CLSID *ClassID, int RegResID>
-	inline void addin<AppT, ClassID, RegResID>::setup_ui(msaddin::_DTEPtr dte, msaddin::AddInPtr addin_instance)
+	inline void addin<AppT, ClassID, RegResID>::setup_ui(EnvDTE::_DTEPtr dte, EnvDTE::AddInPtr addin_instance)
 	{
 		using namespace std;
 
 		IDispatchPtr command_bars;
-		msaddin::CommandsPtr dte_commands;
+		EnvDTE::CommandsPtr dte_commands;
 		vector<command_ptr> commands;
 
 		dte->get_CommandBars(&command_bars);
 		dte->get_Commands(&dte_commands);
 		for (vector<command_ptr>::const_iterator i = _commands.begin(); i != _commands.end(); ++i)
 		{
-			msaddin::CommandPtr dte_command;
+			EnvDTE::CommandPtr dte_command;
 
 			dte_commands->raw_AddNamedCommand(addin_instance, str2bstr((*i)->id()), str2bstr((*i)->caption()), str2bstr((*i)->description()), VARIANT_TRUE, 0, NULL, 16, &dte_command);
 			(*i)->update_ui(dte_command, command_bars);

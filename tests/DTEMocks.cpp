@@ -17,7 +17,7 @@ namespace ea
 		STDMETHODIMP DTEMock::get_CommandBars(IDispatch **ppcbs)
 		{	return command_bars->QueryInterface(ppcbs);	}
 
-		STDMETHODIMP DTEMock::get_Commands(msaddin::Commands **ppCommands)
+		STDMETHODIMP DTEMock::get_Commands(EnvDTE::Commands **ppCommands)
 		{	return static_cast<IUnknown *>((new CommandsMock(commands_list)))->QueryInterface(ppCommands);	}
 
 
@@ -26,7 +26,7 @@ namespace ea
 		{	}
 
 		
-		STDMETHODIMP CommandsMock::raw_AddNamedCommand(msaddin::AddIn *AddInInstance, BSTR Name, BSTR ButtonText, BSTR Tooltip, VARIANT_BOOL MSOButton, long Bitmap, SAFEARRAY **ContextUIGUIDs, long vsCommandDisabledFlagsValue, msaddin::Command **pVal)
+		STDMETHODIMP CommandsMock::raw_AddNamedCommand(EnvDTE::AddIn *AddInInstance, BSTR Name, BSTR ButtonText, BSTR Tooltip, VARIANT_BOOL MSOButton, long /*Bitmap*/, SAFEARRAY **ContextUIGUIDs, long vsCommandDisabledFlagsValue, EnvDTE::Command **pVal)
 		{
 			Assert::IsTrue(::SysStringLen(Name) == wcslen(Name));
 			Assert::IsTrue(::SysStringLen(ButtonText) == wcslen(ButtonText));
@@ -35,7 +35,7 @@ namespace ea
 			Assert::IsTrue(0 == ContextUIGUIDs);
 			Assert::IsTrue(16 == vsCommandDisabledFlagsValue);
 			
-			msaddin::CommandPtr created_command(new CommandMock);
+			EnvDTE::CommandPtr created_command(new CommandMock);
 
 			DTEMock::command c = {	AddInInstance, Name, ButtonText, Tooltip, created_command	};
 
