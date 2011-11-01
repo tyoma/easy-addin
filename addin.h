@@ -52,6 +52,7 @@ namespace ea
 			public IDispatchImpl<msaddin::IDTExtensibility2, &__uuidof(msaddin::IDTExtensibility2), &__uuidof(msaddin::__AddInDesignerObjects), 1, 0>,
 			public IDispatchImpl<msaddin::IDTCommandTarget, &__uuidof(msaddin::IDTCommandTarget), &__uuidof(msaddin::__EnvDTE), 7, 0>
 	{
+		msaddin::_DTEPtr _dte;
 		std::wstring _regid;
 		std::auto_ptr<AppT> _application;
 		std::vector<command_ptr> _commands;
@@ -100,7 +101,7 @@ namespace ea
 		virtual std::wstring caption() const = 0;
 		virtual std::wstring description() const = 0;
 		virtual void update_ui(msaddin::CommandPtr cmd, IDispatchPtr command_bars) const = 0;
-		virtual bool query_status(msaddin::_DTEPtr dte, bool &enabled, std::wstring *caption, std::wstring *description) const = 0;
+		virtual bool query_status(msaddin::_DTEPtr dte, bool &checked, std::wstring *caption, std::wstring *description) const = 0;
 		virtual void execute(msaddin::_DTEPtr dte, VARIANT *input, VARIANT *output) const = 0;
 	};
 
@@ -110,19 +111,19 @@ namespace ea
 	try
 	{
 		DISPPARAMS dispparams = { 0 };
-		msaddin::_DTEPtr dte(host);
 		_variant_t vregid;
 		unsigned int arg_error;
 
+		_dte = host;
 		if (instance)
 			if (S_OK == instance->Invoke(3 /*get_RegID*/, IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &vregid, NULL, &arg_error))
 				_regid = _bstr_t(vregid);
 			else
 				return E_UNEXPECTED;
-		_application.reset(new AppT(dte));
+		_application.reset(new AppT(IDispatchPtr(host, true)));
 		query_commands(_application.get());
 		if (5 /*ext_cm_UISetup*/ == connectMode)
-			setup_ui(dte, instance);
+			setup_ui(_dte, instance);
 		return S_OK;
 	}
 	catch (...)
@@ -133,6 +134,8 @@ namespace ea
 	template <class AppT, const CLSID *ClassID, int RegResID>
 	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::OnDisconnection(msaddin::ext_DisconnectMode /*removeMode*/, SAFEARRAY ** /*custom*/)
 	{
+		_dte = 0;
+		_commands.clear();
 		_application.reset();
 		return S_OK;
 	}
@@ -150,24 +153,30 @@ namespace ea
 	{	return E_NOTIMPL;	}
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
-	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_QueryStatus(BSTR id, msaddin::vsCommandStatusTextWanted /*needed_text*/, msaddin::vsCommandStatus * /*status*/, VARIANT * /*text*/)
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_QueryStatus(BSTR id, msaddin::vsCommandStatusTextWanted /*needed_text*/, msaddin::vsCommandStatus *status, VARIANT * /*text*/)
 	{
 		if (id == NULL)
 			return E_INVALIDARG;
 		if (command_ptr c = find_command(id))
 		{
+			bool checked;
+			bool enabled = c->query_status(_dte, checked, 0, 0);
+
+			*status = static_cast<msaddin::vsCommandStatus>(msaddin::vsCommandStatusSupported + (enabled ? msaddin::vsCommandStatusEnabled : 0) + (checked ? msaddin::vsCommandStatusLatched : 0));
 			return S_OK;
 		}
 		return E_UNEXPECTED;
 	}
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
-	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_Exec(BSTR id, msaddin::vsCommandExecOption /*execute_option*/, VARIANT * /*input*/, VARIANT * /*output*/, VARIANT_BOOL * /*handled*/)
+	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_Exec(BSTR id, msaddin::vsCommandExecOption /*execute_option*/, VARIANT *input, VARIANT *output, VARIANT_BOOL *handled)
 	{
 		if (id == NULL)
 			return E_INVALIDARG;
 		if (command_ptr c = find_command(id))
 		{
+			c->execute(_dte, input, output);
+			*handled = VARIANT_TRUE;
 			return S_OK;
 		}
 		return E_UNEXPECTED;
@@ -180,6 +189,7 @@ namespace ea
 	template <class AppT, const CLSID *ClassID, int RegResID>
 	inline void addin<AppT, ClassID, RegResID>::query_commands(command_target *application)
 	{
+		_commands.clear();
 		application->get_commands(_commands);
 	}
 	
