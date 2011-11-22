@@ -154,6 +154,7 @@ namespace ea
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
 	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_QueryStatus(BSTR id, EnvDTE::vsCommandStatusTextWanted /*needed_text*/, EnvDTE::vsCommandStatus *status, VARIANT * /*text*/)
+	try
 	{
 		if (id == NULL)
 			return E_INVALIDARG;
@@ -167,9 +168,14 @@ namespace ea
 		}
 		return E_UNEXPECTED;
 	}
+	catch (...)
+	{
+		return E_FAIL;
+	}
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
 	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::raw_Exec(BSTR id, EnvDTE::vsCommandExecOption /*execute_option*/, VARIANT *input, VARIANT *output, VARIANT_BOOL *handled)
+	try
 	{
 		if (id == NULL)
 			return E_INVALIDARG;
@@ -180,6 +186,10 @@ namespace ea
 			return S_OK;
 		}
 		return E_UNEXPECTED;
+	}
+	catch (...)
+	{
+		return E_FAIL;
 	}
 
 	template <class AppT, const CLSID *ClassID, int RegResID>
