@@ -76,11 +76,11 @@ namespace ea
 
 			public:
 				mock_command_impl(const wstring &id, const wstring &caption, const wstring &description)
-					: _id(id), _caption(caption), _description(description)
+					: _id(id), _caption(caption), _description(description), throw_on_command(false)
 				{	}
 
 				mock_command_impl(const wstring &id, const wstring &caption, const wstring &description, bool &release_flag)
-					: checked_dtor(release_flag), _id(id), _caption(caption), _description(description)
+					: checked_dtor(release_flag), _id(id), _caption(caption), _description(description), throw_on_command(false)
 				{	}
 
 				virtual wstring id() const
@@ -97,11 +97,16 @@ namespace ea
 				virtual void update_ui(EnvDTE::CommandPtr cmd, IDispatchPtr command_bars) const
 				{	update_ui_log.push_back(make_pair(cmd, command_bars));	}
 
+				bool throw_on_command;
+
 				bool command_enabled, command_checked;
 				mutable vector<EnvDTE::_DTEPtr /*dte*/> query_status_log;
 
 				virtual bool query_status(EnvDTE::_DTEPtr dte, bool &checked, wstring * /*caption*/, wstring * /*description*/) const
 				{
+					if (throw_on_command)
+						throw 0;
+
 					query_status_log.push_back(dte);
 					checked = command_checked;
 					return command_enabled;
@@ -111,7 +116,12 @@ namespace ea
 				mutable vector<execute_log_entry> execute_log;
 
 				virtual void execute(EnvDTE::_DTEPtr dte, VARIANT *input, VARIANT *output) const
-				{	execute_log.push_back(make_pair(dte, make_pair(input, output)));	}
+				{
+					if (throw_on_command)
+						throw 0;
+
+					execute_log.push_back(make_pair(dte, make_pair(input, output)));
+				}
 			};
 
 			int addin1_novscmdt::instance_count = 0;
@@ -810,6 +820,33 @@ namespace ea
 				Assert::IsTrue((EnvDTE::vsCommandStatusSupported) == status[3]);
 				Assert::IsTrue(1 == c1->query_status_log.size());
 				Assert::IsTrue(dte == c1->query_status_log[0]);
+			}
+
+
+			[TestMethod]
+			void ExecAndQueryStatusTranslateCPPExceptionsToEFail()
+			{
+				// INIT
+				CComPtr<msaddin::IDTExtensibility2> a;
+				CComPtr<DTEMock> dte(new DTEMock);
+				CComPtr<AddInMock> addin_instance(new AddInMock);
+				EnvDTE::IDTCommandTargetPtr cmd_target;
+				shared_ptr<mock_command_impl> c(new mock_command_impl(L"run", L"", L""));
+				EnvDTE::vsCommandStatus status;
+				VARIANT_BOOL handled;
+
+				AddinWithCommandListImpl::CreateInstance(&a);
+				cmd_target = (IDispatch *)a;
+
+				addin_instance->prog_id = L"MyAddIn.Connect";
+
+				addin_with_commandlist::commands.push_back(c);
+				a->OnConnection(dte, msaddin::ext_cm_Startup, addin_instance, 0);
+				c->throw_on_command = true;
+
+				// ACT / ASSERT
+				Assert::IsTrue(E_FAIL == cmd_target->raw_QueryStatus(_bstr_t(L"MyAddIn.Connect.run"), EnvDTE::vsCommandStatusTextWantedNone, &status, &vtMissing));
+				Assert::IsTrue(E_FAIL == cmd_target->raw_Exec(_bstr_t(L"MyAddIn.Connect.run"), EnvDTE::vsCommandExecOptionDoDefault, 0, 0, &handled));
 			}
 		};
 	}
