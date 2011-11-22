@@ -53,7 +53,7 @@ namespace ea
 			public IDispatchImpl<EnvDTE::IDTCommandTarget, &__uuidof(EnvDTE::IDTCommandTarget), &__uuidof(EnvDTE::__EnvDTE), 7, 0>
 	{
 		EnvDTE::_DTEPtr _dte;
-		std::wstring _regid;
+		std::wstring _progid;
 		std::auto_ptr<AppT> _application;
 		std::vector<command_ptr> _commands;
 
@@ -110,16 +110,19 @@ namespace ea
 	inline STDMETHODIMP addin<AppT, ClassID, RegResID>::OnConnection(IDispatch *host, msaddin::ext_ConnectMode connectMode, IDispatch *instance, SAFEARRAY ** /*custom*/)
 	try
 	{
-		DISPPARAMS dispparams = { 0 };
-		_variant_t vregid;
-		unsigned int arg_error;
-
 		_dte = host;
 		if (instance)
-			if (S_OK == instance->Invoke(3 /*get_RegID*/, IID_NULL, 0, DISPATCH_PROPERTYGET, &dispparams, &vregid, NULL, &arg_error))
-				_regid = _bstr_t(vregid);
-			else
-				return E_UNEXPECTED;
+		{
+			EnvDTE::AddInPtr addin_instance;
+
+			if (S_OK == instance->QueryInterface(__uuidof(EnvDTE::AddIn), (void **)&addin_instance))
+			{
+				_bstr_t progid;
+
+				addin_instance->get_ProgID(progid.GetAddress());
+				_progid = progid;
+			}
+		}
 		_application.reset(new AppT(IDispatchPtr(host, true)));
 		query_commands(_application.get());
 		if (5 /*ext_cm_UISetup*/ == connectMode)
@@ -226,9 +229,9 @@ namespace ea
 	template <class AppT, const CLSID *ClassID, int RegResID>
 	inline command_ptr addin<AppT, ClassID, RegResID>::find_command(std::wstring id) const
 	{
-		if (id.find(_regid + L".") == 0)
+		if (id.find(_progid + L".") == 0)
 		{
-			id.erase(0, _regid.size() + 1);
+			id.erase(0, _progid.size() + 1);
 			for (vector<command_ptr>::const_iterator i = _commands.begin(); i != _commands.end(); ++i)
 				if (id == (*i)->id())
 					return *i;

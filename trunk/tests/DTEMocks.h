@@ -33,7 +33,7 @@ namespace ea
 			}
 		};
 
-		template <typename InterfaceT>
+		template <typename InterfaceT, const GUID *iid = &__uuidof(InterfaceT)>
 		class mock_com_object : public InterfaceT, public checked_dtor
 		{
 			int _references;
@@ -41,7 +41,7 @@ namespace ea
 		public:
 			STDMETHODIMP QueryInterface(REFIID riid, void **ppvObject)
 			{
-				if(riid != IID_IUnknown && riid != IID_IDispatch && riid != __uuidof(InterfaceT))
+				if(riid != IID_IUnknown && riid != IID_IDispatch && riid != *iid)
 					return E_NOINTERFACE;
 				*ppvObject =(IUnknown *)(InterfaceT *)this;
 				AddRef();
@@ -197,12 +197,10 @@ namespace ea
 
 		class AddInMock : public mock_com_object<EnvDTE::AddIn>
 		{
-			STDMETHODIMP Invoke(DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr);
-
 			STDMETHODIMP get_Description(BSTR * /*lpbstr*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP put_Description(BSTR /*lpbstr*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP get_Collection(EnvDTE::AddIns ** /*lppaddins*/)	{	return E_NOTIMPL;	}
-			STDMETHODIMP get_ProgID(BSTR * /*lpbstr*/)	{	return E_NOTIMPL;	}
+			STDMETHODIMP get_ProgID(BSTR *lpbstr);
 			STDMETHODIMP get_Guid(BSTR * /*lpbstr*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP get_Connected(VARIANT_BOOL * /*lpfConnect*/)	{	return E_NOTIMPL;	}
 			STDMETHODIMP put_Connected(VARIANT_BOOL /*lpfConnect*/)	{	return E_NOTIMPL;	}
