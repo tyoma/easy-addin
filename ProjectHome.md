@@ -1,0 +1,1 @@
+The framework is a handful COM -> C++ bridge, allowing addin developers not be bothered by the necessity of implementing IDTExtensibility2 & IDTCommandTarget interfaces.
