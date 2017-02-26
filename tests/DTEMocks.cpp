@@ -1,6 +1,6 @@
 #include "DTEMocks.h"
 
-using namespace Microsoft::VisualStudio::TestTools::UnitTesting;
+#include <ut/assert.h>
 
 namespace ea
 {
@@ -28,12 +28,12 @@ namespace ea
 		
 		STDMETHODIMP CommandsMock::raw_AddNamedCommand(EnvDTE::AddIn *AddInInstance, BSTR Name, BSTR ButtonText, BSTR Tooltip, VARIANT_BOOL MSOButton, long /*Bitmap*/, SAFEARRAY **ContextUIGUIDs, long vsCommandDisabledFlagsValue, EnvDTE::Command **pVal)
 		{
-			Assert::IsTrue(::SysStringLen(Name) == wcslen(Name));
-			Assert::IsTrue(::SysStringLen(ButtonText) == wcslen(ButtonText));
-			Assert::IsTrue(::SysStringLen(Tooltip) == wcslen(Tooltip));
-			Assert::IsTrue(VARIANT_TRUE == MSOButton);
-			Assert::IsTrue(0 == ContextUIGUIDs);
-			Assert::IsTrue(16 == vsCommandDisabledFlagsValue);
+			assert_equal(::SysStringLen(Name), wcslen(Name));
+			assert_equal(::SysStringLen(ButtonText), wcslen(ButtonText));
+			assert_equal(::SysStringLen(Tooltip), wcslen(Tooltip));
+			assert_equal(VARIANT_TRUE, MSOButton);
+			assert_null(ContextUIGUIDs);
+			assert_equal(16, vsCommandDisabledFlagsValue);
 			
 			EnvDTE::CommandPtr created_command(new CommandMock);
 
