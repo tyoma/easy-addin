@@ -11,6 +11,8 @@ using namespace std;
 
 class CEasyAddinTestsModule : public CAtlDllModuleT<CEasyAddinTestsModule> {	} _AtlModule;
 
+#pragma warning(disable:4702)
+
 namespace ea
 {
 	namespace tests
