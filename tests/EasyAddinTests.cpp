@@ -7,11 +7,11 @@
 #include <ut/assert.h>
 #include <ut/test.h>
 
+#pragma warning(disable:4702)
+
 using namespace std;
 
 class CEasyAddinTestsModule : public CAtlDllModuleT<CEasyAddinTestsModule> {	} _AtlModule;
-
-#pragma warning(disable:4702)
 
 namespace ea
 {
@@ -43,7 +43,7 @@ namespace ea
 
 			struct __declspec(uuid("C5B0AE02-698E-4B11-AF14-462520BDA453")) addin_throwing_novscmdt
 			{
-				addin_throwing_novscmdt(EnvDTE::_DTEPtr dte)
+				addin_throwing_novscmdt(const EnvDTE::_DTEPtr &/*dte*/)
 				{	throw 0;	}
 			};
 
@@ -383,7 +383,7 @@ namespace ea
 				a->OnConnection(dte1, msaddin::ext_cm_AfterStartup, 0, 0);
 
 				// ASSERT
-				assert_equal(dte1, addin_with_param_storing::dte);
+				assert_is_true(dte1 == addin_with_param_storing::dte);
 
 				// INIT
 				a->OnDisconnection(msaddin::ext_dm_UserClosed, 0);
@@ -392,7 +392,7 @@ namespace ea
 				a->OnConnection(dte2, msaddin::ext_cm_AfterStartup, 0, 0);
 
 				// ASSERT
-				assert_equal(dte2, addin_with_param_storing::dte);
+				assert_is_true(dte2 == addin_with_param_storing::dte);
 			}
 
 
@@ -481,17 +481,17 @@ namespace ea
 				// ASSERT
 				assert_equal(3u, dte->commands_list.size());
 
-				assert_equal(IUnknownPtr(addin_instance), IUnknownPtr(dte->commands_list[0].addin_instance));
+				assert_is_true(IUnknownPtr(addin_instance) == IUnknownPtr(dte->commands_list[0].addin_instance));
 				assert_equal(L"a", dte->commands_list[0].id);
 				assert_equal(L"A {C8DE681B-F9CB-46FF-96E3-44C8DE97964E}", dte->commands_list[0].caption);
 				assert_equal(L"{D4FBBBDD-7730-4E77-BF8D-197920A39E0A}", dte->commands_list[0].description);
 				
-				assert_equal(IUnknownPtr(addin_instance), IUnknownPtr(dte->commands_list[1].addin_instance));
+				assert_is_true(IUnknownPtr(addin_instance) == IUnknownPtr(dte->commands_list[1].addin_instance));
 				assert_equal(L"b", dte->commands_list[1].id);
 				assert_equal(L"B {9633565D-55D0-4A17-8DAF-15604DDB3491}", dte->commands_list[1].caption);
 				assert_equal(L"{7FA3A73A-4D80-407B-8CA4-0C7904526197} {D4FBBBDD-7730-4E77-BF8D-197920A39E0A}", dte->commands_list[1].description);
 
-				assert_equal(IUnknownPtr(addin_instance), dte->commands_list[2].addin_instance);
+				assert_is_true(IUnknownPtr(addin_instance) == dte->commands_list[2].addin_instance);
 				assert_equal(L"c", dte->commands_list[2].id);
 				assert_equal(L"C {7B718B04-91E7-4EA3-97AE-DDEE9F6E9817}", dte->commands_list[2].caption);
 				assert_equal(L"BF8D 197920A39E0A", dte->commands_list[2].description);
@@ -519,12 +519,12 @@ namespace ea
 				// ASSERT
 				assert_equal(2u, dte->commands_list.size());
 
-				assert_equal(IUnknownPtr(addin_instance), IUnknownPtr(dte->commands_list[0].addin_instance));
+				assert_is_true(IUnknownPtr(addin_instance) == IUnknownPtr(dte->commands_list[0].addin_instance));
 				assert_equal(L"run", dte->commands_list[0].id);
 				assert_equal(L"Run 96E3", dte->commands_list[0].caption);
 				assert_equal(L"D4FBBBDD-7730-4E77-BF8D", dte->commands_list[0].description);
 
-				assert_equal(IUnknownPtr(addin_instance), IUnknownPtr(dte->commands_list[1].addin_instance));
+				assert_is_true(IUnknownPtr(addin_instance) == IUnknownPtr(dte->commands_list[1].addin_instance));
 				assert_equal(L"stop", dte->commands_list[1].id);
 				assert_equal(L"Stop DDEE9F6E9817", dte->commands_list[1].caption);
 				assert_equal(L"BF8D", dte->commands_list[1].description);
@@ -563,11 +563,11 @@ namespace ea
 				assert_equal(1u, c2->update_ui_log.size());
 
 				assert_is_true(dte1->commands_list[0].created_command);
-				assert_equal(dte1->commands_list[0].created_command, c1->update_ui_log[0].first);
-				assert_equal(dte1->command_bars, c1->update_ui_log[0].second);
+				assert_is_true(dte1->commands_list[0].created_command == c1->update_ui_log[0].first);
+				assert_is_true(dte1->command_bars == c1->update_ui_log[0].second);
 
-				assert_equal(dte1->commands_list[1].created_command, c2->update_ui_log[0].first);
-				assert_equal(dte1->command_bars, c2->update_ui_log[0].second);
+				assert_is_true(dte1->commands_list[1].created_command == c2->update_ui_log[0].first);
+				assert_is_true(dte1->command_bars == c2->update_ui_log[0].second);
 
 				// ACT
 				a->OnConnection(dte2, (msaddin::ext_ConnectMode)5, (EnvDTE::AddIn *)addin_instance, 0);
@@ -576,11 +576,11 @@ namespace ea
 				assert_equal(2u, c1->update_ui_log.size());
 				assert_equal(2u, c2->update_ui_log.size());
 
-				assert_equal(dte2->commands_list[0].created_command, c1->update_ui_log[1].first);
-				assert_equal(dte2->command_bars, c1->update_ui_log[1].second);
+				assert_is_true(dte2->commands_list[0].created_command == c1->update_ui_log[1].first);
+				assert_is_true(dte2->command_bars == c1->update_ui_log[1].second);
 
-				assert_equal(dte2->commands_list[1].created_command, c2->update_ui_log[1].first);
-				assert_equal(dte2->command_bars, c2->update_ui_log[1].second);
+				assert_is_true(dte2->commands_list[1].created_command == c2->update_ui_log[1].first);
+				assert_is_true(dte2->command_bars == c2->update_ui_log[1].second);
 			}
 
 
