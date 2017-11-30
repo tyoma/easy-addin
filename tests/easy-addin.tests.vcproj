@@ -5,6 +5,7 @@
 	Name="easy-addin.tests"
 	ProjectGUID="{549BC5EC-9E8F-4EEC-A1B0-739EA8D9C74A}"
 	RootNamespace="easy-addin.tests"
+	TargetFrameworkVersion="0"
 	>
 	<Platforms>
 		<Platform
@@ -24,6 +25,7 @@
 			>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/MP1"
 				Optimization="0"
 				AdditionalIncludeDirectories="./../..;$(VSInstallDir)..\Common Files\Designer;$(VSInstallDir)..\Common Files\Microsoft Shared\MSEnv"
 				PreprocessorDefinitions="_DEBUG"
@@ -45,6 +47,7 @@
 			>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/MP1"
 				Optimization="0"
 				AdditionalIncludeDirectories="./../..;$(VSInstallDir)..\Common Files\Designer;$(VSInstallDir)..\Common Files\Microsoft Shared\MSEnv"
 				PreprocessorDefinitions="_DEBUG"
@@ -66,6 +69,7 @@
 			>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/MP1"
 				Optimization="3"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
@@ -92,6 +96,7 @@
 			>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/MP1"
 				Optimization="3"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
