@@ -49,8 +49,8 @@ namespace ea
 
 			struct __declspec(uuid("26BCC010-DC3A-4973-9C78-9F2EA102A2A8")) addin_with_param_storing
 			{
-				addin_with_param_storing(EnvDTE::_DTEPtr dte)
-				{	this->dte = dte;	}
+				addin_with_param_storing(EnvDTE::_DTEPtr dte_)
+				{	dte = dte_;	}
 
 				~addin_with_param_storing()
 				{	dte = 0;	}
@@ -63,10 +63,10 @@ namespace ea
 				addin_with_commandlist(EnvDTE::_DTEPtr /*dte*/)
 				{	}
 
-				void get_commands(vector< shared_ptr<command> > &commands) const
+				void get_commands(vector< shared_ptr<command> > &commands_) const
 				{
 					// Append instead of assign - commands must be clean
-					commands.insert(commands.end(), addin_with_commandlist::commands.begin(), addin_with_commandlist::commands.end());
+					commands_.insert(commands_.end(), commands.begin(), commands.end());
 				}
 
 				static vector< shared_ptr<command> > commands;
