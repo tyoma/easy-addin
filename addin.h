@@ -31,11 +31,6 @@
 	#import <dte80a.olb> no_implementation
 #pragma warning(default: 4278)
 
-namespace std
-{
-	using tr1::shared_ptr;
-}
-
 namespace ea
 {
 	struct command;
